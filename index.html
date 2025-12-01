@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator & Scanner</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f5f5f5;
+            padding: 0;
+            border-bottom: 3px solid #667eea;
+            overflow-x: auto;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 20px 10px;
+            text-align: center;
+            cursor: pointer;
+            background: #f5f5f5;
+            border: none;
+            font-size: 0.95em;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .tab:hover {
+            background: #e0e0e0;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            margin-bottom: -3px;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .tool-section {
+            display: none;
+        }
+
+        .tool-section.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border 0.3s;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .qr-output {
+            margin-top: 30px;
+            text-align: center;
+            padding: 30px;
+            background: #f9f9f9;
+            border-radius: 12px;
+            display: none;
+        }
+
+        .qr-output.show {
+            display: block;
+        }
+
+        #qrcode {
+            display: inline-block;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .download-btn {
+            margin-top: 20px;
+        }
+
+        .size-control {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .size-control input[type="range"] {
+            flex: 1;
+        }
+
+        .size-value {
+            font-weight: 600;
+            color: #667eea;
+            min-width: 60px;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .info-box p {
+            margin: 0;
+            color: #1565c0;
+        }
+
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f9f9f9;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 200px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        #videoPreview {
+            width: 100%;
+            max-width: 500px;
+            border-radius: 12px;
+            background: #000;
+            margin: 20px auto;
+            display: block;
+        }
+
+        .scan-result {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f0f9ff;
+            border-radius: 12px;
+            border: 2px solid #667eea;
+        }
+
+        .scan-result h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .scan-output {
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            word-wrap: break-word;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+        }
+
+        .stop-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        }
+
+        /* Ad Container Styles */
+        .ad-container {
+            margin: 20px auto;
+            text-align: center;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ad-container-top {
+            margin-bottom: 20px;
+        }
+
+        .ad-container-bottom {
+            margin-top: 30px;
+        }
+
+        .ad-label {
+            font-size: 0.75em;
+            color: #999;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔲 QR Code Generator & Scanner</h1>
+            <p class="subtitle">Generate, Scan & Decode QR Codes</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('text')">📝 Text to QR</button>
+            <button class="tab" onclick="switchTab('url')">🔗 URL to QR</button>
+            <button class="tab" onclick="switchTab('phone')">📱 Phone to QR</button>
+            <button class="tab" onclick="switchTab('image')">🖼️ Image to QR</button>
+            <button class="tab" onclick="switchTab('scanner')">📷 Scan QR</button>
+        </div>
+
+        <div class="content">
+            <!-- Adsterra Banner Ad - Top -->
+            <div class="ad-container ad-container-top">
+                <div class="ad-label">Advertisement</div>
+                <!-- Adsterra Banner Code - Apna code yahan paste karein -->
+                <script type="text/javascript">
+                    atOptions = {
+                        'key' : 'YOUR_BANNER_KEY_HERE',
+                        'format' : 'iframe',
+                        'height' : 90,
+                        'width' : 728,
+                        'params' : {}
+                    };
+                    document.write('<scr' + 'ipt type="text/javascript" src="//www.topcreativeformat.com/YOUR_BANNER_KEY_HERE/invoke.js"></scr' + 'ipt>');
+                </script>
+            </div>
+
+            <!-- Text to QR -->
+            <div id="text" class="tool-section active">
+                <div class="info-box">
+                    <p>💡 Koi bhi text enter karein aur QR code generate karein</p>
+                </div>
+                <div class="input-group">
+                    <label>Apna Text Enter Karein:</label>
+                    <textarea id="textInput" placeholder="Yahan apna text likhein..."></textarea>
+                </div>
+                <div class="input-group">
+                    <label>QR Code Size:</label>
+                    <div class="size-control">
+                        <input type="range" id="textSize" min="128" max="512" value="256" step="32">
+                        <span class="size-value"><span id="textSizeValue">256</span> px</span>
+                    </div>
+                </div>
+                <button onclick="generateQR('text')">🔲 Generate QR Code</button>
+            </div>
+
+            <!-- URL to QR -->
+            <div id="url" class="tool-section">
+                <div class="info-box">
+                    <p>💡 Website URL ko QR code mein convert karein</p>
+                </div>
+                <div class="input-group">
+                    <label>Website URL:</label>
+                    <input type="url" id="urlInput" placeholder="https://example.com">
+                </div>
+                <div class="input-group">
+                    <label>QR Code Size:</label>
+                    <div class="size-control">
+                        <input type="range" id="urlSize" min="128" max="512" value="256" step="32">
+                        <span class="size-value"><span id="urlSizeValue">256</span> px</span>
+                    </div>
+                </div>
+                <button onclick="generateQR('url')">🔲 Generate QR Code</button>
+            </div>
+
+            <!-- Phone to QR -->
+            <div id="phone" class="tool-section">
+                <div class="info-box">
+                    <p>💡 Phone number scan karne par seedha call kar sakte hain</p>
+                </div>
+                <div class="input-group">
+                    <label>Phone Number (Country Code ke saath):</label>
+                    <input type="tel" id="phoneInput" placeholder="+91 9876543210">
+                </div>
+                <div class="input-group">
+                    <label>QR Code Size:</label>
+                    <div class="size-control">
+                        <input type="range" id="phoneSize" min="128" max="512" value="256" step="32">
+                        <span class="size-value"><span id="phoneSizeValue">256</span> px</span>
+                    </div>
+                </div>
+                <button onclick="generateQR('phone')">🔲 Generate QR Code</button>
+            </div>
+
+            <!-- Image to QR -->
+            <div id="image" class="tool-section">
+                <div class="info-box">
+                    <p>💡 Image upload karein - QR scan karne par seedha image dikhega (Chhoti images best)</p>
+                </div>
+                
+                <div class="input-group">
+                    <label for="fileInput">
+                        <div class="upload-area">
+                            <div class="upload-icon">📁</div>
+                            <p><strong>Click karein image upload karne ke liye</strong></p>
+                            <p style="color: #666; margin-top: 10px;">JPG, PNG, GIF - Chhoti file recommended</p>
+                        </div>
+                    </label>
+                    <input type="file" id="fileInput" class="file-input" accept="image/*">
+                    <img id="previewImage" class="preview-image" style="display: none;">
+                    <div id="fileInfo" style="margin-top: 10px; color: #666; display: none;"></div>
+                </div>
+
+                <div class="input-group">
+                    <label>QR Code Size:</label>
+                    <div class="size-control">
+                        <input type="range" id="imageSize" min="256" max="1024" value="512" step="64">
+                        <span class="size-value"><span id="imageSizeValue">512</span> px</span>
+                    </div>
+                </div>
+                <button onclick="generateQR('image')">🔲 Generate QR Code</button>
+            </div>
+
+            <!-- QR Scanner -->
+            <div id="scanner" class="tool-section">
+                <div class="info-box">
+                    <p>📷 QR code ko camera se scan karein ya gallery se upload karein</p>
+                </div>
+                
+                <div style="text-align: center;">
+                    <video id="videoPreview" style="display: none;"></video>
+                    <canvas id="scanCanvas" style="display: none;"></canvas>
+                    
+                    <div style="margin: 20px 0;">
+                        <button onclick="startScanner()" id="startBtn">📷 Camera Se Scan</button>
+                        <button onclick="document.getElementById('qrFileInput').click()" id="uploadQrBtn">📤 Gallery Se Upload</button>
+                        <button onclick="stopScanner()" id="stopBtn" class="stop-btn" style="display: none;">⏹️ Stop Scanner</button>
+                    </div>
+
+                    <input type="file" id="qrFileInput" class="file-input" accept="image/*">
+
+                    <div id="scanResult" style="display: none;" class="scan-result">
+                        <h3>✅ Scan Result:</h3>
+                        <div id="scanOutput" class="scan-output"></div>
+                        <button onclick="copyResult()">📋 Copy Result</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QR Output -->
+            <div class="qr-output" id="qrOutput">
+                <div id="qrcode"></div>
+                <button class="download-btn" onclick="downloadQR()">⬇️ Download QR Code</button>
+            </div>
+
+            <!-- Adsterra Native Banner - Middle -->
+            <div class="ad-container" style="margin: 30px auto;">
+                <div class="ad-label">Advertisement</div>
+                <!-- Adsterra Native Banner Code -->
+                <script type="text/javascript">
+                    atOptions = {
+                        'key' : 'YOUR_NATIVE_BANNER_KEY_HERE',
+                        'format' : 'iframe',
+                        'height' : 250,
+                        'width' : 300,
+                        'params' : {}
+                    };
+                    document.write('<scr' + 'ipt type="text/javascript" src="//www.topcreativeformat.com/YOUR_NATIVE_BANNER_KEY_HERE/invoke.js"></scr' + 'ipt>');
+                </script>
+            </div>
+
+            <!-- Adsterra Popunder Ad (Invisible - Opens on Click) -->
+            <script type="text/javascript">
+                atOptions = {
+                    'key' : 'YOUR_POPUNDER_KEY_HERE',
+                    'format' : 'iframe',
+                    'height' : 60,
+                    'width' : 468,
+                    'params' : {}
+                };
+                document.write('<scr' + 'ipt type="text/javascript" src="//www.topcreativeformat.com/YOUR_POPUNDER_KEY_HERE/invoke.js"></scr' + 'ipt>');
+            </script>
+
+            <!-- Adsterra Banner Ad - Bottom -->
+            <div class="ad-container ad-container-bottom">
+                <div class="ad-label">Advertisement</div>
+                <!-- Adsterra Bottom Banner Code -->
+                <script type="text/javascript">
+                    atOptions = {
+                        'key' : 'YOUR_BOTTOM_BANNER_KEY_HERE',
+                        'format' : 'iframe',
+                        'height' : 90,
+                        'width' : 728,
+                        'params' : {}
+                    };
+                    document.write('<scr' + 'ipt type="text/javascript" src="//www.topcreativeformat.com/YOUR_BOTTOM_BANNER_KEY_HERE/invoke.js"></scr' + 'ipt>');
+                </script>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedImageData = null;
+        let videoStream = null;
+        let scanInterval = null;
+
+        // File input listener
+        document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+        
+        // QR File input listener for scanning
+        document.getElementById('qrFileInput').addEventListener('change', scanFromGallery);
+
+        // Size sliders update
+        ['text', 'url', 'phone', 'image'].forEach(type => {
+            const slider = document.getElementById(type + 'Size');
+            const value = document.getElementById(type + 'SizeValue');
+            slider.addEventListener('input', () => {
+                value.textContent = slider.value;
+            });
+        });
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file || !file.type.startsWith('image/')) {
+                alert('Kripya ek valid image file select karein!');
+                return;
+            }
+
+            const fileSizeKB = (file.size / 1024).toFixed(2);
+            const fileInfo = document.getElementById('fileInfo');
+            fileInfo.style.display = 'block';
+            fileInfo.innerHTML = `📄 Original File: ${file.name} (${fileSizeKB} KB)`;
+            fileInfo.style.color = '#666';
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = function() {
+                    compressImage(img, file.size);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function compressImage(img, originalSize) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            let width = img.width;
+            let height = img.height;
+            const maxSize = 400;
+            
+            if (width > maxSize || height > maxSize) {
+                if (width > height) {
+                    height = (height / width) * maxSize;
+                    width = maxSize;
+                } else {
+                    width = (width / height) * maxSize;
+                    height = maxSize;
+                }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            let quality = 0.4;
+            if (originalSize > 500000) quality = 0.3;
+            if (originalSize > 1000000) quality = 0.2;
+            if (originalSize > 2000000) quality = 0.15;
+            
+            selectedImageData = canvas.toDataURL('image/jpeg', quality);
+            
+            const preview = document.getElementById('previewImage');
+            preview.src = selectedImageData;
+            preview.style.display = 'block';
+            
+            const compressedSize = (selectedImageData.length * 0.75 / 1024).toFixed(2);
+            const fileInfo = document.getElementById('fileInfo');
+            fileInfo.innerHTML = `📄 Original: ${(originalSize/1024).toFixed(2)} KB → Compressed: ${compressedSize} KB<br>`;
+            fileInfo.innerHTML += `📐 Resized to: ${Math.round(width)}x${Math.round(height)}px<br>`;
+            fileInfo.innerHTML += compressedSize > 150 ? '⚠️ Image still large<br>' : '✅ Optimized!<br>';
+            fileInfo.innerHTML += '💡 Click "Generate QR Code" button';
+            fileInfo.style.color = compressedSize > 150 ? '#ff6b6b' : '#51cf66';
+        }
+
+        async function startScanner() {
+            try {
+                const video = document.getElementById('videoPreview');
+                videoStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' }
+                });
+                
+                video.srcObject = videoStream;
+                video.setAttribute('playsinline', true);
+                video.style.display = 'block';
+                video.play();
+                
+                document.getElementById('startBtn').style.display = 'none';
+                document.getElementById('stopBtn').style.display = 'inline-block';
+                document.getElementById('scanResult').style.display = 'none';
+                
+                requestAnimationFrame(tick);
+                
+            } catch (error) {
+                alert('Camera access nahi mila! Permission allow karein.');
+                console.error('Camera error:', error);
+            }
+        }
+
+        function tick() {
+            const video = document.getElementById('videoPreview');
+            const canvas = document.getElementById('scanCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+                
+                if (code) {
+                    displayResult(code.data);
+                    stopScanner();
+                    return;
+                }
+            }
+            
+            if (videoStream) {
+                requestAnimationFrame(tick);
+            }
+        }
+
+        function stopScanner() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+            
+            const video = document.getElementById('videoPreview');
+            video.style.display = 'none';
+            video.srcObject = null;
+            
+            document.getElementById('startBtn').style.display = 'inline-block';
+            document.getElementById('stopBtn').style.display = 'none';
+        }
+
+        function displayResult(data) {
+            const outputDiv = document.getElementById('scanOutput');
+            
+            if (data.startsWith('http://') || data.startsWith('https://')) {
+                outputDiv.innerHTML = `<strong>URL:</strong><br><a href="${data}" target="_blank" style="color: #667eea; word-break: break-all;">${data}</a>`;
+            } else if (data.startsWith('tel:')) {
+                const phone = data.replace('tel:', '');
+                outputDiv.innerHTML = `<strong>Phone:</strong><br><a href="${data}" style="color: #667eea;">${phone}</a>`;
+            } else if (data.startsWith('data:image')) {
+                outputDiv.innerHTML = `<strong>Image:</strong><br><img src="${data}" style="max-width: 100%; border-radius: 8px; margin-top: 10px;">`;
+            } else {
+                outputDiv.innerHTML = `<strong>Text:</strong><br>${data}`;
+            }
+            
+            document.getElementById('scanResult').style.display = 'block';
+        }
+
+        function copyResult() {
+            const text = document.getElementById('scanOutput').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ Copied to clipboard!');
+            });
+        }
+
+        function scanFromGallery(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.startsWith('image/')) {
+                alert('Kripya ek valid image file select karein!');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.getElementById('scanCanvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+                    
+                    if (code) {
+                        displayResult(code.data);
+                    } else {
+                        alert('❌ QR code nahi mila! Kripya clear QR code image upload karein.');
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function switchTab(tabName) {
+            if (tabName !== 'scanner') {
+                stopScanner();
+            }
+            
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tool-section').forEach(s => s.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            document.getElementById('qrOutput').classList.remove('show');
+        }
+
+        function generateQR(type) {
+            let text = '';
+            let size = 256;
+            
+            switch(type) {
+                case 'text':
+                    text = document.getElementById('textInput').value.trim();
+                    size = document.getElementById('textSize').value;
+                    break;
+                case 'url':
+                    text = document.getElementById('urlInput').value.trim();
+                    size = document.getElementById('urlSize').value;
+                    if(text && !text.startsWith('http')) {
+                        text = 'https://' + text;
+                    }
+                    break;
+                case 'phone':
+                    let phone = document.getElementById('phoneInput').value.trim();
+                    size = document.getElementById('phoneSize').value;
+                    text = 'tel:' + phone.replace(/\s/g, '');
+                    break;
+                case 'image':
+                    size = document.getElementById('imageSize').value;
+                    if (!selectedImageData) {
+                        alert('Kripya pehle ek image upload karein!');
+                        return;
+                    }
+                    text = selectedImageData;
+                    break;
+            }
+            
+            if(!text) {
+                alert('Kripya input field bharen!');
+                return;
+            }
+            
+            document.getElementById('qrcode').innerHTML = '';
+            
+            try {
+                new QRCode(document.getElementById('qrcode'), {
+                    text: text,
+                    width: parseInt(size),
+                    height: parseInt(size),
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.L
+                });
+                
+                document.getElementById('qrOutput').classList.add('show');
+            } catch (error) {
+                alert('QR code generate nahi hua! Image size kam karein.');
+                console.error('QR Error:', error);
+            }
+        }
+
+        function downloadQR() {
+            const canvas = document.querySelector('#qrcode canvas');
+            if(canvas) {
+                const url = canvas.toDataURL('image/png');
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'qrcode.png';
+                a.click();
+            }
+        }
+    </script>
+</body>
+</html>
